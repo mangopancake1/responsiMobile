@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'pages/home_page.dart';
-import 'pages/detail_page.dart';
-import 'pages/create_page.dart';
-import 'pages/edit_page.dart';
-import 'pages/favorite_page.dart';
+import 'pages/phone_catalog_page.dart';
+import 'pages/phone_detail_page.dart';
+import 'pages/add_phone_page.dart';
+import 'pages/update_phone_page.dart';
+import 'pages/favorite_phones_page.dart';
 
 void main() {
   runApp(const PhoneCatalogApp());
@@ -16,36 +16,16 @@ class PhoneCatalogApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Phone Catalog',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      initialRoute: HomePage.routeName,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      initialRoute: PhoneCatalogPage.routeName,
       routes: {
-        HomePage.routeName: (context) => HomePage(),
-        CreatePage.routeName: (context) => CreatePage(),
-        FavoritePage.routeName: (context) => FavoritePage(),
-      },
-      onGenerateRoute: (settings) {
-        // Cek jika route yang diminta adalah EditPage
-        if (settings.name == EditPage.routeName) {
-          // Mengambil phoneId dari arguments
-          final phoneId = settings.arguments as int?;
-          if (phoneId != null) {
-            return MaterialPageRoute(
-              builder: (context) => EditPage(phoneId: phoneId),
-            );
-          }
-        }
-
-        // Cek jika route yang diminta adalah DetailPage
-        else if (settings.name == DetailPage.routeName) {
-          final phoneId = settings.arguments as int?;
-          if (phoneId != null) {
-            return MaterialPageRoute(
-              builder: (context) => DetailPage(),
-            );
-          }
-        }
-
-        return null;  // Jika tidak ada yang sesuai, return null.
+        PhoneCatalogPage.routeName: (context) => const PhoneCatalogPage(),
+        PhoneDetailPage.routeName: (context) => const PhoneDetailPage(),
+        AddPhonePage.routeName: (context) => const AddPhonePage(),
+        UpdatePhonePage.routeName: (context) => const UpdatePhonePage(),
+        FavoritePhonesPage.routeName: (context) => const FavoritePhonesPage(),
       },
       debugShowCheckedModeBanner: false,
     );

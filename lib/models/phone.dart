@@ -15,7 +15,6 @@ class Phone {
     required this.specification,
   });
 
-
   factory Phone.fromJson(Map<String, dynamic> json) {
     return Phone(
       id: json['id'] is int
