@@ -1,139 +1,99 @@
-// /lib/pages/edit_page.dart
-
 import 'package:flutter/material.dart';
-import 'package:aplication/services/api_service.dart';
-import 'package:aplication/models/phone.dart';
+import '../models/phone.dart';
+import '../services/api_service.dart';
 
 class EditPage extends StatefulWidget {
-  final String phoneId;
+  static const routeName = '/edit';  // Menambahkan routeName untuk navigasi
 
-  EditPage({required this.phoneId});
+  final int phoneId;  // phoneId untuk mengidentifikasi phone yang akan diedit
+
+  const EditPage({Key? key, required this.phoneId}) : super(key: key);
 
   @override
   _EditPageState createState() => _EditPageState();
 }
 
 class _EditPageState extends State<EditPage> {
-  final ApiService apiService = ApiService();
+  late Phone _phone;
+  final _nameController = TextEditingController();
+  final _brandController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _specificationController = TextEditingController();
 
-  // Controllers untuk input form
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController brandController = TextEditingController();
-  final TextEditingController priceController = TextEditingController();
-  final TextEditingController specificationController = TextEditingController();
-  final TextEditingController imageUrlController = TextEditingController();
-
-  late Future<Phone> phone;
-
+  // Ambil data phone untuk diedit
   @override
   void initState() {
     super.initState();
-    // Mengambil data detail ponsel untuk diedit
-    phone = apiService.fetchPhoneDetails(widget.phoneId);
+
+    // Mengambil phoneId dari arguments
+    final phoneId = ModalRoute.of(context)!.settings.arguments as int;
+
+    ApiService().getPhones().then((phones) {
+      _phone = phones.firstWhere((p) => p.id == phoneId);
+      _nameController.text = _phone.name;
+      _brandController.text = _phone.brand;
+      _priceController.text = _phone.price.toString();
+      _specificationController.text = _phone.specification;
+    });
   }
 
-  // Fungsi untuk menyimpan perubahan ponsel
-  void _savePhone() {
+  // Fungsi untuk memperbarui data phone
+  void _updatePhone() {
+    final name = _nameController.text;
+    final brand = _brandController.text;
+    final price = double.tryParse(_priceController.text);
+    final specification = _specificationController.text;
+
+    if (name.isEmpty || brand.isEmpty || price == null || specification.isEmpty) {
+      return;
+    }
+
     final updatedPhone = Phone(
-      id: widget.phoneId, // ID ponsel tetap tidak berubah
-      name: nameController.text,
-      brand: brandController.text,
-      price: priceController.text,
-      imageUrl: imageUrlController.text,
-      specification: specificationController.text,
+      id: _phone.id,
+      name: name,
+      brand: brand,
+      price: price,
+      imageUrl: _phone.imageUrl,  // Gambar tetap sama
+      specification: specification,
     );
 
-    apiService.editPhone(widget.phoneId, updatedPhone).then((_) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Phone updated successfully!'),
-      ));
+    ApiService().updatePhone(_phone.id, updatedPhone).then((_) {
       Navigator.pop(context); // Kembali ke halaman sebelumnya setelah update
-    }).catchError((error) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Failed to update phone: $error'),
-      ));
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Edit Phone'),
-      ),
-      body: FutureBuilder<Phone>(
-        future: phone,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData) {
-            return Center(child: Text('No phone data found'));
-          }
-
-          final phone = snapshot.data!;
-
-          // Inisialisasi controller dengan data yang ada
-          nameController.text = phone.name;
-          brandController.text = phone.brand;
-          priceController.text = phone.price;
-          specificationController.text = phone.specification;
-          imageUrlController.text = phone.imageUrl;
-
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Phone Name',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                SizedBox(height: 10),
-                TextField(
-                  controller: brandController,
-                  decoration: InputDecoration(
-                    labelText: 'Brand',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                SizedBox(height: 10),
-                TextField(
-                  controller: priceController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Price',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                SizedBox(height: 10),
-                TextField(
-                  controller: specificationController,
-                  decoration: InputDecoration(
-                    labelText: 'Specification',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                SizedBox(height: 10),
-                TextField(
-                  controller: imageUrlController,
-                  decoration: InputDecoration(
-                    labelText: 'Image URL',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _savePhone,
-                  child: Text('Save Changes'),
-                ),
-              ],
+      appBar: AppBar(title: Text('Edit Phone')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(labelText: 'Phone Name'),
             ),
-          );
-        },
+            TextField(
+              controller: _brandController,
+              decoration: InputDecoration(labelText: 'Brand'),
+            ),
+            TextField(
+              controller: _priceController,
+              decoration: InputDecoration(labelText: 'Price'),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: _specificationController,
+              decoration: InputDecoration(labelText: 'Specification'),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _updatePhone,
+              child: Text('Update Phone'),
+            ),
+          ],
+        ),
       ),
     );
   }

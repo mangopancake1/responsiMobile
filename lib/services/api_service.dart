@@ -1,61 +1,61 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:aplication/models/phone.dart';
+import '../models/phone.dart';
+import '../constants/api_constants.dart';
 
 class ApiService {
+  final String baseUrl = ApiConstants.baseUrl; // Menggunakan baseUrl dari ApiConstants
 
-  static const String baseUrl = 'https://resp-api-three.vercel.app/';
+  // Mengambil seluruh data phone
+  Future<List<Phone>> getPhones() async {
+    final String proxyUrl = 'https://cors-anywhere.herokuapp.com/'; // Proxy URL
+    final String targetUrl = '$baseUrl/phones'; // Target API URL
 
+    final response = await http.get(
+      Uri.parse('$proxyUrl$targetUrl'),
+      headers: {
+        'Authorization': 'Bearer YOUR_API_KEY', // Ganti dengan kunci API Anda
+      },
+    );
 
-  Future<List<Phone>> fetchPhones() async {
-    final response = await http.get(Uri.parse(baseUrl));
     if (response.statusCode == 200) {
-
-
       List<dynamic> data = json.decode(response.body);
-      return data.map((item) => Phone.fromJson(item)).toList();
+      return data.map((phoneData) => Phone.fromJson(phoneData)).toList();
     } else {
       throw Exception('Failed to load phones');
     }
   }
 
-
-  Future<Phone> fetchPhoneDetails(String id) async {
-    final response = await http.get(Uri.parse('$baseUrl$id'));
-    if (response.statusCode == 200) {
-
-      return Phone.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Failed to load phone details');
-    }
-  }
-
-
-  Future<void> createPhone(Phone phone) async {
+  // Menambahkan data phone baru
+  Future<void> addPhone(Phone phone) async {
     final response = await http.post(
-      Uri.parse(baseUrl),
+      Uri.parse('$baseUrl/phones'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(phone.toJson()),
     );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to create phone');
+
+    if (response.statusCode != 201) {
+      throw Exception('Failed to add phone');
     }
   }
 
-
-  Future<void> editPhone(String id, Phone phone) async {
+  // Mengedit data phone
+  Future<void> updatePhone(int id, Phone phone) async {
     final response = await http.put(
-      Uri.parse('$baseUrl$id'),
+      Uri.parse('$baseUrl/phones/$id'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(phone.toJson()),
     );
+
     if (response.statusCode != 200) {
-      throw Exception('Failed to edit phone');
+      throw Exception('Failed to update phone');
     }
   }
 
-  Future<void> deletePhone(String id) async {
-    final response = await http.delete(Uri.parse('$baseUrl$id'));
+  // Menghapus data phone
+  Future<void> deletePhone(int id) async {
+    final response = await http.delete(Uri.parse('$baseUrl/phones/$id'));
+
     if (response.statusCode != 200) {
       throw Exception('Failed to delete phone');
     }

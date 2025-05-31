@@ -1,48 +1,53 @@
-// /lib/main.dart
-
 import 'package:flutter/material.dart';
-import 'package:aplication/pages/home_page.dart';
-import 'package:aplication/pages/detail_page.dart';
-import 'package:aplication/pages/create_page.dart';
-import 'package:aplication/pages/edit_page.dart';
+import 'pages/home_page.dart';
+import 'pages/detail_page.dart';
+import 'pages/create_page.dart';
+import 'pages/edit_page.dart';
+import 'pages/favorite_page.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const PhoneCatalogApp());
 }
 
-class MyApp extends StatelessWidget {
+class PhoneCatalogApp extends StatelessWidget {
+  const PhoneCatalogApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Phone CRUD App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      // Mendefinisikan routing aplikasi
-      initialRoute: '/',  // Halaman awal yang akan ditampilkan
+      title: 'Phone Catalog',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      initialRoute: HomePage.routeName,
       routes: {
-        '/': (context) => HomePage(), // Halaman utama (Home)
-        '/create': (context) => CreatePage(), // Halaman untuk membuat ponsel baru
-        '/edit': (context) => EditPage(phoneId: ''), // Halaman untuk mengedit ponsel
-        '/detail': (context) => DetailPage(phoneId: ''), // Halaman detail ponsel
+        HomePage.routeName: (context) => HomePage(),
+        CreatePage.routeName: (context) => CreatePage(),
+        FavoritePage.routeName: (context) => FavoritePage(),
       },
-      // Untuk menangani rute dinamis yang membutuhkan parameter ID
       onGenerateRoute: (settings) {
-        if (settings.name == '/edit') {
-          final phoneId = settings.arguments as String;
-          return MaterialPageRoute(
-            builder: (context) => EditPage(phoneId: phoneId),
-          );
+        // Cek jika route yang diminta adalah EditPage
+        if (settings.name == EditPage.routeName) {
+          // Mengambil phoneId dari arguments
+          final phoneId = settings.arguments as int?;
+          if (phoneId != null) {
+            return MaterialPageRoute(
+              builder: (context) => EditPage(phoneId: phoneId),
+            );
+          }
         }
-        if (settings.name == '/detail') {
-          final phoneId = settings.arguments as String;
-          return MaterialPageRoute(
-            builder: (context) => DetailPage(phoneId: phoneId),
-          );
+
+        // Cek jika route yang diminta adalah DetailPage
+        else if (settings.name == DetailPage.routeName) {
+          final phoneId = settings.arguments as int?;
+          if (phoneId != null) {
+            return MaterialPageRoute(
+              builder: (context) => DetailPage(),
+            );
+          }
         }
-        return null;
+
+        return null;  // Jika tidak ada yang sesuai, return null.
       },
+      debugShowCheckedModeBanner: false,
     );
   }
 }

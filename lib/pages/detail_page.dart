@@ -1,48 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:aplication/services/api_service.dart';
-import 'package:aplication/models/phone.dart';
-import 'package:aplication/pages/edit_page.dart';
+import '../models/phone.dart';
+import '../services/api_service.dart';
+import 'edit_page.dart';
 
 class DetailPage extends StatefulWidget {
-  final String phoneId;
+  static const routeName = '/detail';  // Menambahkan routeName untuk navigasi
 
-  DetailPage({required this.phoneId});
+  const DetailPage({Key? key}) : super(key: key);
 
   @override
   _DetailPageState createState() => _DetailPageState();
 }
 
 class _DetailPageState extends State<DetailPage> {
-  final ApiService apiService = ApiService();
   late Future<Phone> phone;
 
   @override
   void initState() {
     super.initState();
 
-    phone = apiService.fetchPhoneDetails(widget.phoneId);
-  }
+    // Mengambil phoneId dari arguments yang diteruskan melalui Navigator.pushNamed
+    final phoneId = ModalRoute.of(context)!.settings.arguments as int;
 
-
-  void _deletePhone(String id) {
-    apiService.deletePhone(id).then((_) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Phone deleted successfully!'),
-      ));
-      Navigator.pop(context); // Kembali ke halaman sebelumnya setelah penghapusan
-    }).catchError((error) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Failed to delete phone: $error'),
-      ));
+    // Mengambil data phone berdasarkan ID
+    phone = ApiService().getPhones().then((phones) {
+      return phones.firstWhere((p) => p.id == phoneId);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Phone Details'),
-      ),
+      appBar: AppBar(title: Text('Phone Details')),
       body: FutureBuilder<Phone>(
         future: phone,
         builder: (context, snapshot) {
@@ -51,7 +40,7 @@ class _DetailPageState extends State<DetailPage> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData) {
-            return Center(child: Text('No phone data found'));
+            return Center(child: Text('No data available.'));
           }
 
           final phone = snapshot.data!;
@@ -60,34 +49,34 @@ class _DetailPageState extends State<DetailPage> {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                Image.network(phone.imageUrl), // Gambar ponsel
+                Image.network(phone.imageUrl), // Menampilkan gambar
                 SizedBox(height: 16),
-                Text(
-                  'Name: ${phone.name}',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                Text('Brand: ${phone.brand}', style: TextStyle(fontSize: 18)),
-                Text('Price: ${phone.price}', style: TextStyle(fontSize: 18)),
-                Text('Specification: ${phone.specification}', style: TextStyle(fontSize: 16)),
-                SizedBox(height: 20),
+                Text(phone.name, style: TextStyle(fontSize: 24)),
+                Text(phone.specification, style: TextStyle(fontSize: 16)),
+                SizedBox(height: 8),
+                Text('\$${phone.price}', style: TextStyle(fontSize: 18)),
+                SizedBox(height: 16),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
+                    // Tombol Edit
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.push(
+                        // Navigasi ke EditPage menggunakan pushNamed dan mengirimkan phoneId
+                        Navigator.pushNamed(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => EditPage(phoneId: phone.id),
-                          ),
+                          EditPage.routeName,
+                          arguments: phone.id,  // Mengirimkan phoneId
                         );
                       },
                       child: Text('Edit'),
                     ),
-                    SizedBox(width: 10),
+                    // Tombol Delete
                     ElevatedButton(
                       onPressed: () {
-                        _deletePhone(phone.id);
+                        ApiService().deletePhone(phone.id).then((_) {
+                          Navigator.pop(context); // Kembali ke halaman sebelumnya setelah delete
+                        });
                       },
                       child: Text('Delete'),
                     ),

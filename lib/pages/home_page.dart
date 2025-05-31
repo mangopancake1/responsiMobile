@@ -1,42 +1,32 @@
-// /lib/pages/home_page.dart
-
 import 'package:flutter/material.dart';
-import 'package:aplication/services/api_service.dart';
-import 'package:aplication/models/phone.dart';
-import 'package:aplication/pages/detail_page.dart';
-import 'package:aplication/pages/edit_page.dart';
-import 'package:aplication/pages/create_page.dart';
+import '../models/phone.dart';
+import '../services/api_service.dart';
+import 'detail_page.dart';
+import 'create_page.dart';
+import 'edit_page.dart';
 
 class HomePage extends StatefulWidget {
+  static const routeName = '/home'; // Menambahkan routeName untuk navigasi
+
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  final ApiService apiService = ApiService();
   late Future<List<Phone>> phones;
 
   @override
   void initState() {
     super.initState();
-    // Mengambil data ponsel dari API 
-    phones = apiService.fetchPhones();
+    phones = ApiService().getPhones(); // Ambil data phone dari API
   }
 
-  // Fungsi untuk menghapus ponsel dari daftar
-  void _deletePhone(String id) {
-    apiService.deletePhone(id).then((_) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Phone deleted successfully!'),
-      ));
-      
+  // Fungsi untuk menghapus phone
+  void _deletePhone(int id) {
+    ApiService().deletePhone(id).then((_) {
       setState(() {
-        phones = apiService.fetchPhones();
+        phones = ApiService().getPhones(); // Refresh data setelah delete
       });
-    }).catchError((error) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Failed to delete phone: $error'),
-      ));
     });
   }
 
@@ -44,7 +34,16 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Phone List'),
+        title: Text("Phone List"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.add),
+            onPressed: () {
+              // Menggunakan Navigator.pushNamed untuk navigasi ke CreatePage
+              Navigator.pushNamed(context, CreatePage.routeName);
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<List<Phone>>(
         future: phones,
@@ -54,65 +53,42 @@ class _HomePageState extends State<HomePage> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('No phones found'));
+            return Center(child: Text('No phones available.'));
           }
 
-          final phoneList = snapshot.data!;
+          List<Phone> phoneList = snapshot.data!;
+
           return ListView.builder(
             itemCount: phoneList.length,
             itemBuilder: (context, index) {
               final phone = phoneList[index];
               return ListTile(
+                leading: Image.network(phone.imageUrl), // Menyesuaikan dengan imageUrl
                 title: Text(phone.name),
-                subtitle: Text('Price: ${phone.price}'),
-                leading: Image.network(phone.imageUrl),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Tombol Edit untuk mengarahkan ke halaman Edit
-                    IconButton(
-                      icon: Icon(Icons.edit),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => EditPage(phoneId: phone.id),
-                          ),
-                        );
-                      },
-                    ),
-                    // Tombol Delete untuk menghapus ponsel
-                    IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        _deletePhone(phone.id);
-                      },
-                    ),
-                  ],
-                ),
-                // Ketika ponsel diklik, arahkan ke halaman Detail
+                subtitle: Text('\$${phone.price}'), // Menyesuaikan dengan price
                 onTap: () {
-                  Navigator.push(
+                  // Navigasi ke DetailPage menggunakan pushNamed dan passing parameter phoneId
+                  Navigator.pushNamed(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => DetailPage(phoneId: phone.id),
-                    ),
+                    DetailPage.routeName,
+                    arguments: phone.id, // Mengirim phoneId sebagai argument
                   );
                 },
+                trailing: IconButton(
+                  icon: Icon(Icons.edit),
+                  onPressed: () {
+                    // Menavigasi ke EditPage dan mengirimkan phoneId sebagai argument
+                    Navigator.pushNamed(
+                      context,
+                      EditPage.routeName,
+                      arguments: phone.id, // Mengirim phoneId sebagai argument
+                    );
+                  },
+                ),
               );
             },
           );
         },
-      ),
-      // Tombol untuk membuat ponsel baru
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => CreatePage()),
-          );
-        },
-        child: Icon(Icons.add),
       ),
     );
   }

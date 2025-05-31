@@ -1,112 +1,87 @@
 import 'package:flutter/material.dart';
-import 'package:aplication/services/api_service.dart';
-import 'package:aplication/models/phone.dart';
+import '../models/phone.dart';
+import '../services/api_service.dart';
 
 class CreatePage extends StatefulWidget {
+  static const routeName = '/create';  // Menambahkan routeName untuk navigasi
+
   @override
   _CreatePageState createState() => _CreatePageState();
 }
 
 class _CreatePageState extends State<CreatePage> {
-  final ApiService apiService = ApiService();
+  final _nameController = TextEditingController();
+  final _brandController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _specificationController = TextEditingController();
 
+  // Fungsi untuk menambahkan data phone
+  void _addPhone() {
+    final name = _nameController.text;
+    final brand = _brandController.text;
+    final price = double.tryParse(_priceController.text);
+    final specification = _specificationController.text;
 
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController brandController = TextEditingController();
-  final TextEditingController priceController = TextEditingController();
-  final TextEditingController specificationController = TextEditingController();
-  final TextEditingController imageUrlController = TextEditingController();
-
-
-  void _createPhone() {
-    if (nameController.text.isNotEmpty &&
-        brandController.text.isNotEmpty &&
-        priceController.text.isNotEmpty &&
-        specificationController.text.isNotEmpty &&
-        imageUrlController.text.isNotEmpty) {
-      final newPhone = Phone(
-        id: '', 
-        name: nameController.text,
-        brand: brandController.text,
-        price: priceController.text,
-        imageUrl: imageUrlController.text,
-        specification: specificationController.text,
-      );
-
-  
-      apiService.createPhone(newPhone).then((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Phone created successfully!')),
-        );
-
-        Navigator.pop(context);
-      }).catchError((error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create phone: $error')),
-        );
-      });
-    } else {
-      // Jika ada field kosong
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please fill in all fields')),
-      );
+    // Validasi input
+    if (name.isEmpty || brand.isEmpty || price == null || specification.isEmpty) {
+      return;
     }
+
+    final phone = Phone(
+      id: 0, // ID akan di-set otomatis oleh API
+      name: name,
+      brand: brand,
+      price: price,
+      imageUrl: '', // Gambar akan diatur oleh API
+      specification: specification,
+    );
+
+    // Mengirim data phone baru ke API
+    ApiService().addPhone(phone).then((_) {
+      Navigator.pop(context); // Kembali ke halaman sebelumnya
+    }).catchError((e) {
+      // Menangani error jika ada masalah saat menambah phone
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add phone: $e')),
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Create New Phone'),
-      ),
+      appBar: AppBar(title: Text('Create Phone')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Input untuk nama phone
             TextField(
-              controller: nameController,
-              decoration: InputDecoration(
-                labelText: 'Phone Name',
-                border: OutlineInputBorder(),
-              ),
+              controller: _nameController,
+              decoration: InputDecoration(labelText: 'Phone Name'),
             ),
-            SizedBox(height: 10),
+            // Input untuk brand phone
             TextField(
-              controller: brandController,
-              decoration: InputDecoration(
-                labelText: 'Brand',
-                border: OutlineInputBorder(),
-              ),
+              controller: _brandController,
+              decoration: InputDecoration(labelText: 'Brand'),
             ),
-            SizedBox(height: 10),
+            // Input untuk harga phone
             TextField(
-              controller: priceController,
+              controller: _priceController,
+              decoration: InputDecoration(labelText: 'Price'),
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Price',
-                border: OutlineInputBorder(),
-              ),
             ),
-            SizedBox(height: 10),
+            // Input untuk spesifikasi phone
             TextField(
-              controller: specificationController,
-              decoration: InputDecoration(
-                labelText: 'Specification',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            SizedBox(height: 10),
-            TextField(
-              controller: imageUrlController,
-              decoration: InputDecoration(
-                labelText: 'Image URL',
-                border: OutlineInputBorder(),
-              ),
+              controller: _specificationController,
+              decoration: InputDecoration(labelText: 'Specification'),
             ),
             SizedBox(height: 20),
+            // Tombol untuk menambahkan phone
             ElevatedButton(
-              onPressed: _createPhone,
-              child: Text('Create Phone'),
+              onPressed: _addPhone,
+              child: Text('Add Phone'),
             ),
           ],
         ),
